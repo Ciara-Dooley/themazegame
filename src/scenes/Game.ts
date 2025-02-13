@@ -22,7 +22,11 @@ export class Game extends Scene {
         );
     }
     platforms: Phaser.Physics.Arcade.StaticGroup;
+    stars: any;
     player: any;
+    score = 0;
+    bombs: any;
+    scoreText: any;
     create() {
         this.cusors = this.input.keyboard!.createCursorKeys();
         this.add.image(400, 300, 'sky');
@@ -35,13 +39,24 @@ export class Game extends Scene {
         this.platforms.create(50, 250, 'ground');
         this.platforms.create(750, 220, 'ground');
 
+        this.stars = this.physics.add.group({
+            key: 'star',
+            repeat: 11,
+            setXY: { x: 12, y: 0, stepX: 70 }
+        });
+
+        this.stars.children.iterate(function (child: any) {
+            child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+        });
+
         this.player = this.physics.add.sprite(100, 450, 'dude');
 
         this.player.setBounce(0.2);
         this.player.setCollideWorldBounds(true);
 
-        this.physics.collide(this.player, this.platforms);
+        this.physics.add.collider(this.player, this.platforms);
 
+        this.physics.add.collider(this.stars, this.platforms);
 
         this.anims.create({
             key: 'left',
@@ -62,10 +77,41 @@ export class Game extends Scene {
             frameRate: 10,
             repeat: -1
         });
+        let collectStar = (player: any, star: any) => {
+            star.disableBody(true, true);
+            this.score += 10;
+            this.scoreText.setText('Score: ' + this.score);
+            
+        }
+          this.physics.add.overlap(this.player, this.stars, collectStar, undefined, this);
 
+           this.scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px' });
+
+    //////add bombb stufff herrrreee 
     }
 
+
+
     update() {
+        if (this.cusors.left.isDown) {
+            this.player.setVelocityX(-160);
+
+            this.player.anims.play('left', true);
+        }
+        else if (this.cusors.right.isDown) {
+            this.player.setVelocityX(160);
+
+            this.player.anims.play('right', true);
+        }
+        else {
+            this.player.setVelocityX(0);
+
+            this.player.anims.play('turn');
+        }
+
+        if (this.cusors.up.isDown && this.player.body.touching.down) {
+            this.player.setVelocityY(-330);
+        }
 
     }
 }
