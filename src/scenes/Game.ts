@@ -21,16 +21,18 @@ export class Game extends Scene {
             { frameWidth: 32, frameHeight: 48 }
         );
     }
+   
     platforms: Phaser.Physics.Arcade.StaticGroup;
     stars: any;
     player: any;
     score = 0;
     bombs: any;
+    gameOver = false;
     scoreText: any;
     create() {
         this.cusors = this.input.keyboard!.createCursorKeys();
         this.add.image(400, 300, 'sky');
-
+        this.bombs = this.physics.add.group();
         this.platforms = this.physics.add.staticGroup();
 
         this.platforms.create(400, 568, 'ground').setScale(2).refreshBody();
@@ -49,6 +51,7 @@ export class Game extends Scene {
             child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
         });
 
+
         this.player = this.physics.add.sprite(100, 450, 'dude');
 
         this.player.setBounce(0.2);
@@ -57,6 +60,15 @@ export class Game extends Scene {
         this.physics.add.collider(this.player, this.platforms);
 
         this.physics.add.collider(this.stars, this.platforms);
+           
+        this.physics.add.collider(this.bombs, this.platforms);
+
+        this.physics.add.collider(this.player, this.bombs, ( player: any, bomb) => {
+            this.physics.pause();
+            player.setTint(0xff0000);
+            player.anims.play('turn');
+            this.gameOver = true;
+        }, undefined, this);
 
         this.anims.create({
             key: 'left',
@@ -81,7 +93,22 @@ export class Game extends Scene {
             star.disableBody(true, true);
             this.score += 10;
             this.scoreText.setText('Score: ' + this.score);
-            
+            if (this.stars.countActive(true) === 0)
+                {
+                    this.stars.children.iterate(function (child:any ) {
+                        
+                    child.enableBody(true, child.x, 0, true, true);
+                        
+                    });
+        
+                    var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+        
+                    var bomb = this.bombs.create(x, 16, 'bomb');
+                    bomb.setBounce(1);
+                    bomb.setCollideWorldBounds(true);
+                    bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+        
+            }
         }
           this.physics.add.overlap(this.player, this.stars, collectStar, undefined, this);
 
